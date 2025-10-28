@@ -1,10 +1,9 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:random_user_bus_2_teste/app/core/ui/theme/app_theme.dart';
-import 'package:random_user_bus_2_teste/app/data/datasource/rest_client.dart';
-import 'package:random_user_bus_2_teste/app/data/repository/person_repository.dart';
 import 'package:random_user_bus_2_teste/app/domain/entity/user.dart';
 import 'package:random_user_bus_2_teste/app/presentation/home/home_page_state.dart';
 import 'package:random_user_bus_2_teste/app/presentation/home/home_view_model.dart';
@@ -17,33 +16,27 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  late RestClient restClient;
-  late PersonRepository repositrory;
-  late HomeViewModel homePageViewModel;
 
   @override
   void initState() {
-    restClient = RestClient();
-    repositrory = PersonRepository(restClient: restClient);
-    homePageViewModel = HomeViewModel(personRepository: repositrory);
-
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {});
+    WidgetsBinding.instance.addPostFrameCallback((_) async { });
   }
 
   @override
   void dispose() {
-    homePageViewModel.dispose();
+    context.read<HomeViewModel>().dispose();
     log("Disposer chamado");
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+   final homePageViewModel =  context.read<HomeViewModel>();
     return Scaffold(
       appBar: AppBar(title: const Text('Home page')),
-      body: ListenableBuilder(
-        listenable: homePageViewModel,
+      body:BlocBuilder<HomeViewModel,HomePageState>(
+        bloc: homePageViewModel,
         builder: (context, child) {
           final HomePageState(:users, :message, :status, :resultUser) =
               homePageViewModel.state;
@@ -94,12 +87,13 @@ class _HomePageState extends State<HomePage> {
           };
         },
       ),
-      floatingActionButton: FloatingActionButton(onPressed: () {
-        homePageViewModel.stopTicker();
-                            Navigator.of(
-                              context,
-                            ).pushNamed('/perstisteds');
-      },child: FaIcon(FontAwesomeIcons.database),),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          homePageViewModel.stopTicker();
+          Navigator.of(context).pushNamed('/perstisteds');
+        },
+        child: FaIcon(FontAwesomeIcons.database),
+      ),
     );
   }
 }

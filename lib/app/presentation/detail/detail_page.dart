@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:random_user_bus_2_teste/app/core/ui/theme/app_theme.dart';
 import 'package:random_user_bus_2_teste/app/core/ui/widget/app_horizontal_divider.dart';
 import 'package:random_user_bus_2_teste/app/core/ui/widget/app_vertical_divider.dart';
 import 'package:random_user_bus_2_teste/app/domain/entity/user.dart';
 import 'package:random_user_bus_2_teste/app/presentation/detail/component/expandadle_item.dart';
+import 'package:random_user_bus_2_teste/app/presentation/detail/detail_page_state.dart';
+import 'package:random_user_bus_2_teste/app/presentation/detail/detail_view_model.dart';
 
 class DetailPage extends StatelessWidget {
   final User _userResult;
@@ -12,7 +15,10 @@ class DetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.read<DetailViewModel>().loadUser(_userResult);
     final User(
+      :id,
+      :isPersisted,
       :pictures,
       :name,
       :title,
@@ -45,9 +51,12 @@ class DetailPage extends StatelessWidget {
       :idName,
       :idValue,
     ) = _userResult;
-
+    User? removedUser;
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(onPressed: (){
+              Navigator.of(context).pop<User?>(removedUser);
+        }, icon: Icon(Icons.arrow_back)),
         title: Text(
           'Profiel user',
           style: AppTheme.theme.textTheme.labelMedium,
@@ -56,177 +65,233 @@ class DetailPage extends StatelessWidget {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          child: Column(
-            spacing: 16,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox(
-                width: 130,
-                height: 130,
-                child: CircleAvatar(
-                  backgroundColor: Colors.amber,
-                  backgroundImage: NetworkImage(pictures[1]),
-                ),
-              ),
-              Text(
-                '$title $name',
-                style: AppTheme.theme.textTheme.labelMedium?.copyWith(
-                  fontSize: 21,
-                ),
-              ),
-              Row(
-                spacing: 4,
-                crossAxisAlignment: CrossAxisAlignment.end,
+          child: BlocConsumer<DetailViewModel, DetailPageState>(
+            listener: (context, state) {
+              if (state.status == DetailPageStatus.error) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.message ?? "Erro ao carregar dados"),
+                  ),
+                );
+              }
+              return;
+            },
+            builder: (context, blocState) {
+              return Column(
+                spacing: 16,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Column(
-                    children: [
-                      Text(gender, style: AppTheme.theme.textTheme.bodySmall),
-                      Text(
-                        "Gender",
-                        style: AppTheme.theme.textTheme.labelMedium,
-                      ),
-                    ],
-                  ),
-                  AppVerticalDivider(),
-                  Column(
-                    children: [
-                      Text(phone, style: AppTheme.theme.textTheme.bodySmall),
-                      Text(cell, style: AppTheme.theme.textTheme.bodySmall),
-                      Text(
-                        "Phone ",
-                        style: AppTheme.theme.textTheme.labelMedium,
-                      ),
-                    ],
-                  ),
-                  AppVerticalDivider(),
-                  Column(
-                    children: [
-                      Text(nat, style: AppTheme.theme.textTheme.labelSmall),
-                      Text("Nat ", style: AppTheme.theme.textTheme.labelMedium),
-                    ],
-                  ),
-                ],
-              ),
-
-              AppHorizantalDivider(),
-              SizedBox(height: 10),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  children: [
-                    Text(
-                      "Email: ",
-                      style: AppTheme.theme.textTheme.displayLarge,
+                  SizedBox(
+                    width: 130,
+                    height: 130,
+                    child: CircleAvatar(
+                      backgroundColor: Colors.amber,
+                      backgroundImage: NetworkImage(pictures[1]),
                     ),
-                    Text(email, style: AppTheme.theme.textTheme.bodySmall),
-                  ],
-                ),
-              ),
+                  ),
+                  Text(
+                    '$title $name',
+                    style: AppTheme.theme.textTheme.labelMedium?.copyWith(
+                      fontSize: 21,
+                    ),
+                  ),
+                  Row(
+                    spacing: 4,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Column(
+                        children: [
+                          Text(
+                            gender,
+                            style: AppTheme.theme.textTheme.bodySmall,
+                          ),
+                          Text(
+                            "Gender",
+                            style: AppTheme.theme.textTheme.labelMedium,
+                          ),
+                        ],
+                      ),
+                      AppVerticalDivider(),
+                      Column(
+                        children: [
+                          Text(
+                            phone,
+                            style: AppTheme.theme.textTheme.bodySmall,
+                          ),
+                          Text(cell, style: AppTheme.theme.textTheme.bodySmall),
+                          Text(
+                            "Phone ",
+                            style: AppTheme.theme.textTheme.labelMedium,
+                          ),
+                        ],
+                      ),
+                      AppVerticalDivider(),
+                      Column(
+                        children: [
+                          Text(nat, style: AppTheme.theme.textTheme.labelSmall),
+                          Text(
+                            "Nat ",
+                            style: AppTheme.theme.textTheme.labelMedium,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
 
-              ExpandableItem(
-                title: 'Location',
-                children: [
-                  ItemDescriptionRow(
-                    title: 'Strete',
-                    description: '$streetName,$streetNumber',
+                  AppHorizantalDivider(),
+                  SizedBox(height: 10),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Row(
+                      children: [
+                        Text(
+                          "Email: ",
+                          style: AppTheme.theme.textTheme.displayLarge,
+                        ),
+                        Text(email, style: AppTheme.theme.textTheme.bodySmall),
+                      ],
+                    ),
                   ),
-                  ItemDescriptionRow(title: 'City', description: city),
-                  ItemDescriptionRow(title: 'State', description: state),
-                  ItemDescriptionRow(title: 'Coutry', description: country),
-                  ItemDescriptionRow(title: 'Post code', description: postcode),
-                  ItemDescriptionRow(
-                    title: 'Cordinater',
-                    description: "Latitude:$latitude - Longitude: $longitude",
+
+                  ExpandableItem(
+                    title: 'Location',
+                    children: [
+                      ItemDescriptionRow(
+                        title: 'Strete',
+                        description: '$streetName,$streetNumber',
+                      ),
+                      ItemDescriptionRow(title: 'City', description: city),
+                      ItemDescriptionRow(title: 'State', description: state),
+                      ItemDescriptionRow(title: 'Coutry', description: country),
+                      ItemDescriptionRow(
+                        title: 'Post code',
+                        description: postcode,
+                      ),
+                      ItemDescriptionRow(
+                        title: 'Cordinater',
+                        description:
+                            "Latitude:$latitude - Longitude: $longitude",
+                      ),
+                      ItemDescriptionRow(
+                        title: 'Timezone',
+                        description:
+                            "Offset:$timezoneOffset - Description: $timezoneDescription",
+                      ),
+                    ],
                   ),
-                  ItemDescriptionRow(
-                    title: 'Timezone',
-                    description:
-                        "Offset:$timezoneOffset - Description: $timezoneDescription",
+                  ExpandableItem(
+                    title: 'Login',
+                    children: [
+                      ItemDescriptionRow(
+                        title: 'UUID',
+                        description: '$streetName,$streetNumber',
+                      ),
+                      ItemDescriptionRow(
+                        title: 'User-name',
+                        description: '$streetName,$streetNumber',
+                      ),
+                      ItemDescriptionRow(
+                        title: 'Password',
+                        description: '$streetName,$streetNumber',
+                      ),
+                      ItemDescriptionRow(
+                        title: 'Salt',
+                        description: '$streetName,$streetNumber',
+                      ),
+                      ItemDescriptionRow(
+                        title: 'Sha1',
+                        description: '$streetName,$streetNumber',
+                      ),
+                      ItemDescriptionRow(
+                        title: 'Sha256',
+                        description: '$streetName,$streetNumber',
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              ExpandableItem(
-                title: 'Login',
-                children: [
-                  ItemDescriptionRow(
-                    title: 'UUID',
-                    description: '$streetName,$streetNumber',
-                  ),
-                  ItemDescriptionRow(
-                    title: 'User-name',
-                    description: '$streetName,$streetNumber',
-                  ),
-                  ItemDescriptionRow(
-                    title: 'Password',
-                    description: '$streetName,$streetNumber',
-                  ),
-                  ItemDescriptionRow(
-                    title: 'Salt',
-                    description: '$streetName,$streetNumber',
-                  ),
-                  ItemDescriptionRow(
-                    title: 'Sha1',
-                    description: '$streetName,$streetNumber',
-                  ),
-                  ItemDescriptionRow(
-                    title: 'Sha256',
-                    description: '$streetName,$streetNumber',
-                  ),
-                ],
-              ),
-              ExpandableItem(
-                title: 'Date Of Birth',
-                children: [
-                  ItemDescriptionRow(
+                  ExpandableItem(
                     title: 'Date Of Birth',
-                    description: dateOfBirth,
+                    children: [
+                      ItemDescriptionRow(
+                        title: 'Date Of Birth',
+                        description: dateOfBirth,
+                      ),
+                      ItemDescriptionRow(title: 'Age', description: '$age'),
+                    ],
                   ),
-                  ItemDescriptionRow(title: 'Age', description: '$age'),
-                ],
-              ),
-              ExpandableItem(
-                title: 'Registred',
-                children: [
-                  ItemDescriptionRow(
-                    title: 'Date',
-                    description: registeredDate,
+                  ExpandableItem(
+                    title: 'Registred',
+                    children: [
+                      ItemDescriptionRow(
+                        title: 'Date',
+                        description: registeredDate,
+                      ),
+                      ItemDescriptionRow(
+                        title: 'Age',
+                        description: '$registeredAge',
+                      ),
+                    ],
                   ),
-                  ItemDescriptionRow(
-                    title: 'Age',
-                    description: '$registeredAge',
+                  ExpandableItem(
+                    title: 'Id',
+                    children: [
+                      ItemDescriptionRow(title: 'Name', description: idName),
+                      ItemDescriptionRow(title: 'Value', description: idValue),
+                    ],
+                  ),
+                  ExpandableItem(
+                    title: 'Pictures',
+                    children: [
+                      ItemDescriptionRow(
+                        title: 'Large',
+                        description: pictures[0],
+                      ),
+                      ItemDescriptionRow(
+                        title: 'medium',
+                        description: pictures[1],
+                      ),
+                      ItemDescriptionRow(
+                        title: 'thumbnail',
+                        description: pictures[2],
+                      ),
+                    ],
                   ),
                 ],
-              ),
-              ExpandableItem(
-                title: 'Id',
-                children: [
-                  ItemDescriptionRow(title: 'Name', description: idName),
-                  ItemDescriptionRow(title: 'Value', description: idValue),
-                ],
-              ),
-              ExpandableItem(
-                title: 'Pictures',
-                children: [
-                  ItemDescriptionRow(title: 'Large', description: pictures[0]),
-                  ItemDescriptionRow(title: 'medium', description: pictures[1]),
-                  ItemDescriptionRow(
-                    title: 'thumbnail',
-                    description: pictures[2],
-                  ),
-                ],
-              ),
-            ],
+              );
+            },
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
-        label: Text('Save user'),
-        icon: Icon(Icons.add),
-      ),
+      floatingActionButton:
+          BlocSelector<DetailViewModel, DetailPageState, User>(
+            selector: (state) {
+              if (state.user != null) {
+                return state.user!;
+              }
+              return _userResult;
+            },
+            builder: (context, userState) {
+              final DetailViewModel(:removeUser, :addUser) = context
+                  .read<DetailViewModel>();
+              final User(id: idState) = userState;
+              return FloatingActionButton.extended(
+                onPressed: () {
+                    if (idState != null ) {
+                        removeUser(userState);
+                        removedUser = userState;
+                    }
+                    else{
+                      addUser(userState);
+                      removedUser = null;
+                    }
+                    },
+                label: Text(idState != null ? 'Remove user' : 'Save user'),
+                icon: Icon(idState != null ? Icons.remove : Icons.add),
+              );
+            },
+          ),
     );
   }
 }

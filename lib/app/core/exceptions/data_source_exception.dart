@@ -1,5 +1,7 @@
 class DataTableSourceException implements Exception {
   final String message;
+  final StackTrace? stackTrace;
+  final int? erroCode;
 
-  DataTableSourceException({required this.message});
+   DataTableSourceException({this.stackTrace,this.erroCode,required this.message});
 }
