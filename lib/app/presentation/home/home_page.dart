@@ -1,10 +1,8 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:random_user_bus_2_teste/app/core/ui/theme/app_theme.dart';
-import 'package:random_user_bus_2_teste/app/domain/entity/user.dart';
+import 'package:random_user_bus_2_teste/app/core/app_constants/app_constants.dart';
+import 'package:random_user_bus_2_teste/app/core/ui/extensions/ui.extensions.dart';
 import 'package:random_user_bus_2_teste/app/presentation/home/home_page_state.dart';
 import 'package:random_user_bus_2_teste/app/presentation/home/home_view_model.dart';
 
@@ -15,47 +13,59 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
-
+class _HomePageState extends State<HomePage> with RouteAware {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async { });
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final route = ModalRoute.of(context);
+      if (route is PageRoute) {
+        context.routeObserver.subscribe(this, route);
+      }
+    });
   }
 
+
   @override
-  void dispose() {
-    context.read<HomeViewModel>().dispose();
-    log("Disposer chamado");
-    super.dispose();
+  void didPopNext() {
+    super.didPopNext();
+    context.read<HomeViewModel>()
+    ..fetchPerson()
+    ..startTicker();
   }
 
   @override
   Widget build(BuildContext context) {
-   final homePageViewModel =  context.read<HomeViewModel>();
+    final navigator = Navigator.of(context);
+
+    final homePageViewModel = context.read<HomeViewModel>();
     return Scaffold(
       appBar: AppBar(title: const Text('Home page')),
-      body:BlocBuilder<HomeViewModel,HomePageState>(
-        bloc: homePageViewModel,
+      body: BlocConsumer<HomeViewModel, HomePageState>(
+        listener: (context, state) {
+          if (state.status == HomePageStatus.error) {
+            context.showCustomSnackBar(
+              message: "Erro ao buscar Usúario",
+              isError: true,
+            );
+          }
+          return;
+        },
         builder: (context, child) {
           final HomePageState(:users, :message, :status, :resultUser) =
               homePageViewModel.state;
           return switch (status) {
-            HomePageStatus.initial => Center(child: Text('Buscando dados')),
-
-            HomePageStatus.error => Center(
-              child: Text(message ?? 'Error ao buscar dados'),
+            HomePageStatus.initial => Center(
+              child: Column(
+                children: [
+                  CircularProgressIndicator(),
+                  Text('Buscando dados...'),
+                ],
+              ),
             ),
             _ => SafeArea(
               child: Column(
                 children: [
-                  AnimatedOpacity(
-                    opacity: resultUser != null ? 1 : 0,
-                    duration: Duration(milliseconds: 300),
-                    child: resultUser != null
-                        ? CardPerson(userResult: resultUser)
-                        : SizedBox.shrink(),
-                  ),
                   Expanded(
                     child: ListView.builder(
                       itemCount: users.length,
@@ -69,9 +79,7 @@ class _HomePageState extends State<HomePage> {
                           subtitle: Text(user.email),
                           onTap: () {
                             homePageViewModel.stopTicker();
-                            Navigator.of(
-                              context,
-                            ).pushNamed('/detail', arguments: user);
+                            navigator.pushNamed(AppConstants.ROUTER_DETAIL_USER, arguments: user);
                           },
                         );
                       },
@@ -87,66 +95,19 @@ class _HomePageState extends State<HomePage> {
           };
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          homePageViewModel.stopTicker();
-          Navigator.of(context).pushNamed('/perstisteds');
+      floatingActionButton: BlocBuilder<HomeViewModel, HomePageState>(
+        builder: (context, state) {
+          return Offstage(
+            offstage: state.status != HomePageStatus.success,
+            child: FloatingActionButton(
+              onPressed: () {
+                homePageViewModel.stopTicker();
+                navigator.pushNamed(AppConstants.ROUTER_USER_PERSISTED);
+              },
+              child: FaIcon(FontAwesomeIcons.database),
+            ),
+          );
         },
-        child: FaIcon(FontAwesomeIcons.database),
-      ),
-    );
-  }
-}
-
-class CardPerson extends StatelessWidget {
-  final User userResult;
-  const CardPerson({super.key, required this.userResult});
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme(:labelMedium) = AppTheme.theme.textTheme;
-    final User(:name, :email, :pictures) = userResult;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-      child: Card(
-        elevation: 10,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            spacing: 8,
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SizedBox(
-                width: 100,
-                height: 100,
-                child: CircleAvatar(
-                  backgroundColor: Colors.amber,
-                  backgroundImage: NetworkImage(pictures[1]),
-                ),
-              ),
-              Row(
-                spacing: 5,
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Icon(Icons.person),
-                  Text(name, style: labelMedium),
-                ],
-              ),
-              Row(
-                spacing: 5,
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Icon(Icons.email),
-                  Text(userResult.email, style: labelMedium),
-                ],
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

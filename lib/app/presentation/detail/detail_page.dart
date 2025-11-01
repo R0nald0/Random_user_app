@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:random_user_bus_2_teste/app/core/ui/extensions/ui.extensions.dart';
 import 'package:random_user_bus_2_teste/app/core/ui/theme/app_theme.dart';
 import 'package:random_user_bus_2_teste/app/core/ui/widget/app_horizontal_divider.dart';
 import 'package:random_user_bus_2_teste/app/core/ui/widget/app_vertical_divider.dart';
@@ -54,9 +55,12 @@ class DetailPage extends StatelessWidget {
     User? removedUser;
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(onPressed: (){
-              Navigator.of(context).pop<User?>(removedUser);
-        }, icon: Icon(Icons.arrow_back)),
+        leading: IconButton(
+          onPressed: () {
+            Navigator.of(context).pop<User?>(removedUser);
+          },
+          icon: Icon(Icons.arrow_back),
+        ),
         title: Text(
           'Profiel user',
           style: AppTheme.theme.textTheme.labelMedium,
@@ -68,12 +72,12 @@ class DetailPage extends StatelessWidget {
           child: BlocConsumer<DetailViewModel, DetailPageState>(
             listener: (context, state) {
               if (state.status == DetailPageStatus.error) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(state.message ?? "Erro ao carregar dados"),
-                  ),
+                context.showCustomSnackBar(
+                  message: "Erro ao exibir detalhes do usuário",
+                  isError: true,
                 );
               }
+            
               return;
             },
             builder: (context, blocState) {
@@ -120,7 +124,10 @@ class DetailPage extends StatelessWidget {
                             phone,
                             style: AppTheme.theme.textTheme.bodySmall,
                           ),
-                          Text(cell, style: AppTheme.theme.textTheme.bodySmall),
+                          Text(
+                            cell,
+                            style: AppTheme.theme.textTheme.bodySmall,
+                          ),
                           Text(
                             "Phone ",
                             style: AppTheme.theme.textTheme.labelMedium,
@@ -130,7 +137,10 @@ class DetailPage extends StatelessWidget {
                       AppVerticalDivider(),
                       Column(
                         children: [
-                          Text(nat, style: AppTheme.theme.textTheme.labelSmall),
+                          Text(
+                            nat,
+                            style: AppTheme.theme.textTheme.labelSmall,
+                          ),
                           Text(
                             "Nat ",
                             style: AppTheme.theme.textTheme.labelMedium,
@@ -139,10 +149,10 @@ class DetailPage extends StatelessWidget {
                       ),
                     ],
                   ),
-
+              
                   AppHorizantalDivider(),
                   SizedBox(height: 10),
-
+              
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Row(
@@ -151,11 +161,14 @@ class DetailPage extends StatelessWidget {
                           "Email: ",
                           style: AppTheme.theme.textTheme.displayLarge,
                         ),
-                        Text(email, style: AppTheme.theme.textTheme.bodySmall),
+                        Text(
+                          email,
+                          style: AppTheme.theme.textTheme.bodySmall,
+                        ),
                       ],
                     ),
                   ),
-
+              
                   ExpandableItem(
                     title: 'Location',
                     children: [
@@ -165,7 +178,10 @@ class DetailPage extends StatelessWidget {
                       ),
                       ItemDescriptionRow(title: 'City', description: city),
                       ItemDescriptionRow(title: 'State', description: state),
-                      ItemDescriptionRow(title: 'Coutry', description: country),
+                      ItemDescriptionRow(
+                        title: 'Coutry',
+                        description: country,
+                      ),
                       ItemDescriptionRow(
                         title: 'Post code',
                         description: postcode,
@@ -238,7 +254,10 @@ class DetailPage extends StatelessWidget {
                     title: 'Id',
                     children: [
                       ItemDescriptionRow(title: 'Name', description: idName),
-                      ItemDescriptionRow(title: 'Value', description: idValue),
+                      ItemDescriptionRow(
+                        title: 'Value',
+                        description: idValue,
+                      ),
                     ],
                   ),
                   ExpandableItem(
@@ -278,15 +297,14 @@ class DetailPage extends StatelessWidget {
               final User(id: idState) = userState;
               return FloatingActionButton.extended(
                 onPressed: () {
-                    if (idState != null ) {
-                        removeUser(userState);
-                        removedUser = userState;
-                    }
-                    else{
-                      addUser(userState);
-                      removedUser = null;
-                    }
-                    },
+                  if (idState != null) {
+                    removeUser(userState);
+                    removedUser = userState;
+                  } else {
+                    addUser(userState);
+                    removedUser = null;
+                  }
+                },
                 label: Text(idState != null ? 'Remove user' : 'Save user'),
                 icon: Icon(idState != null ? Icons.remove : Icons.add),
               );

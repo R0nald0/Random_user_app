@@ -1,5 +1,3 @@
-
-
 import 'package:bloc/bloc.dart';
 import 'package:random_user_bus_2_teste/app/core/exceptions/repository_exception.dart';
 import 'package:random_user_bus_2_teste/app/domain/entity/user.dart';
@@ -18,17 +16,19 @@ class DetailViewModel extends Cubit<DetailPageState> {
       emit(state.copyWith(user: () => user, status: DetailPageStatus.success));
 
       emit(state.copyWith(status: DetailPageStatus.loading));
+    
 
       final userPersisted = await _personRepository.findbyApiId(user.uuid);
 
-       if (userPersisted != null) {
-      emit(
-        state.copyWith(
-          user: () => state.user!.copyWith(id: () => userPersisted.id),
-          status: DetailPageStatus.success,
-        ),
-      );
-    }
+      if (userPersisted != null) {
+        emit(
+          state.copyWith(
+            user: () => state.user!.copyWith(id: () => userPersisted.id),
+            status: DetailPageStatus.success,
+            message: () => null,
+          ),
+        );
+      }
     } on RepositoryException catch (_) {
       emit(
         state.copyWith(
@@ -47,8 +47,14 @@ class DetailViewModel extends Cubit<DetailPageState> {
       emit(
         state.copyWith(
           status: DetailPageStatus.success,
+          message: () => "Usuário removido do banco",
           user: () => user.copyWith(id: () => null),
         ),
+      );
+      state.copyWith(
+        status: DetailPageStatus.success,
+        message: () => null,
+        user: () => user.copyWith(id: () => null),
       );
     } on Exception catch (_) {
       emit(
@@ -63,11 +69,12 @@ class DetailViewModel extends Cubit<DetailPageState> {
   Future<void> addUser(User user) async {
     try {
       emit(state.copyWith(status: DetailPageStatus.loading));
-      final line = await _personRepository.save(user);
+      final id = await _personRepository.save(user);
       emit(
         state.copyWith(
-          user: () => state.user!.copyWith(id: () => line),
+          user: () => state.user!.copyWith(id: () => id),
           status: DetailPageStatus.success,
+          message: () => "Usuário salvo no banco",
         ),
       );
     } on Exception catch (_) {

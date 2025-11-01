@@ -12,18 +12,23 @@ class HomeViewModel extends Cubit<HomePageState> {
   HomeViewModel({required PersonRepository personRepository})
     : _personRepository = personRepository,
       super(HomePageState.inital()) {
-    _ticker = Ticker(counter);
+    startTicker();
+  }  
+
+  void stopTicker(){
+      _ticker.stop();
+      _ticker.dispose();
+  }
+  void startTicker() {
+     _ticker = Ticker(counter);
     _ticker.start();
   }
-
-  void stopTicker() => _ticker.stop();
 
   Future<void> fetchPerson() async {
     try {
       emit(state.copyWith(status: HomePageStatus.loading));
-
       final users = await _personRepository.fetchUser();
-
+  
       emit(
         state.copyWith(
           status: HomePageStatus.success,
@@ -44,13 +49,13 @@ class HomeViewModel extends Cubit<HomePageState> {
   }
 
   counter(Duration elapsed) {
+   
     if (elapsed - _lastFetch >= const Duration(seconds: 5)) {
+      
       _lastFetch = elapsed;
       fetchPerson();
     }
   }
 
-  void dispose() {
-    _ticker.dispose();
-  }
+
 }
